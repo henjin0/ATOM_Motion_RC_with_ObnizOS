@@ -1,0 +1,155 @@
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/css/starter-sample.css" />
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <script src="https://unpkg.com/obniz@3.x/obniz.js" crossorigin="anonymous" ></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.9.0/nipplejs.min.js"
+    integrity="sha512-7PRZndBOTMkYqbGwO6dvNDozKEwaJYu3zPLoLv0rzOLMPQ2PVh6yaevCZOUL8+/n+A16fnLYEBKAlYXgMBn54w=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div id="zone_joystick_r" style="width:100%;height:600px;background-color:skyblue;" class="rounded col">
+        dynamicR<br>アクセル</div>
+      <div id="zone_joystick_l" style="width:100%;height:600px;background-color:pink;" class="rounded col">dynamicL<br>ステア
+      </div>
+    </div>
+  </div>
+
+
+  <div class="led">
+    <button class="btn btn-primary" id="F">Forward</button>
+    <button class="btn btn-primary" id="B">Back</button>
+    <button class="btn btn-primary" id="R">Right</button>
+    <button class="btn btn-primary" id="L">Left</button>
+  </div>
+
+  <script>
+    var dynamicR = nipplejs.create({
+  zone: document.getElementById("zone_joystick_r"),
+  color: "blue",
+});
+var dynamicL = nipplejs.create({
+  zone: document.getElementById("zone_joystick_l"),
+  color: "red",
+});
+
+
+let motorPower = [0,0];
+let servoPower = [90,90,90,90];
+
+function actuatorApply(obniz){
+  obniz.plugin.send("OP "+motorPower[0]+ " "+motorPower[1]+" "
+    +servoPower[0]+" "+servoPower[1]+" "+servoPower[2]+" "+servoPower[3]);
+}
+
+function motorMove(value){
+  motorPower[0] = Math.round(value);
+  motorPower[1] = -Math.round(value); 
+}
+
+function servoTurn(value){
+  servoPower[0] = 90+Math.round(value);
+  servoPower[1] = 90+Math.round(value); 
+  servoPower[2] = 90+Math.round(value);
+  servoPower[3] = 90+Math.round(value);
+}
+
+
+var obniz = new Obniz("XXXX-XXXX");
+
+obniz.onconnect = async function () {
+  
+  bindNipple();
+
+  function bindNipple() {
+    dynamicR
+      .on("start end", function (evt, data) {
+        // console.log("evt st:",JSON.stringify(evt))
+        motorMove(0);
+        actuatorApply(obniz);
+      })
+      .on("move", function (evt, data) {
+        // console.log("evt move:",JSON.stringify(evt))
+        console.log("evt move:", evt.target.nipples[0].frontPosition.y);
+        motorMove(evt.target.nipples[0].frontPosition.y * 2);
+        actuatorApply(obniz);
+      })
+      .on(
+        "dir:up plain:up dir:left plain:left dir:down " +
+          "plain:down dir:right plain:right",
+        function (evt, data) {
+          // console.log("evt up:",JSON.stringify(evt))
+        }
+      )
+      .on("pressure", function (evt, data) {
+        //  console.log("evt press:",JSON.stringify(evt))
+      });
+
+    dynamicL
+      .on("start end", function (evt, data) {
+        // console.log("evt st:",JSON.stringify(evt))
+        servoTurn(0);
+        actuatorApply(obniz);
+      })
+      .on("move", function (evt, data) {
+        // console.log("evt move:",JSON.stringify(evt))
+        console.log("evt move:", evt.target.nipples[0].frontPosition.x);
+        servoTurn(evt.target.nipples[0].frontPosition.x / 2);
+        actuatorApply(obniz);
+
+      })
+      .on(
+        "dir:up plain:up dir:left plain:left dir:down " +
+          "plain:down dir:right plain:right",
+        function (evt, data) {
+          // console.log("evt up:",JSON.stringify(evt))
+        }
+      )
+      .on("pressure", function (evt, data) {
+        //  console.log("evt press:",JSON.stringify(evt))
+      });
+  }
+
+  
+  await $("#F").on("touchstart mousedown", async () => {
+    pwm1.duty(0);
+    pwm2.duty(100);
+  });
+  await $("#F").on("touchstart mouseup", async () => {
+    pwm1.duty(0);
+    pwm2.duty(0);
+  });
+  await $("#B").on("touchstart mousedown", async () => {
+    pwm1.duty(100);
+    pwm2.duty(0);
+  });
+  await $("#B").on("touchstart mouseup", async () => {
+    pwm1.duty(0);
+    pwm2.duty(0);
+  });
+
+  await $("#R").on("touchstart mousedown", async () => {
+    servo.angle(105.0 + 10);
+  });
+  await $("#R").on("touchstart mouseup", async () => {
+    servo.angle(95.0);
+  });
+  await $("#L").on("touchstart mousedown", async () => {
+    servo.angle(85.0 - 10);
+  });
+  await $("#L").on("touchstart mouseup", async () => {
+    servo.angle(95.0);
+  });
+};
+
+  </script>
+</body>
+
+</html>
