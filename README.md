@@ -1,0 +1,2 @@
+# ATOM_Motion_RC_with_ObnizOS
+ObnizOSを使ってATOM Motionをラジコンっぽく動かせるプログラム群です。
